@@ -16,7 +16,7 @@ stream.on('tweet', function(data) {
 	var newname = data.text.match(reg);
 	if(newname !== null){
 		//厄介対策　命名から@を削除
-		newname = newname[1].replace(/@/g, "");
+		newname = newname[1].replace(/[@＠]/g, "");
 		newname = newname.slice(0,20);
 		tw.post('account/update_profile', { name: newname	}, function(err, rep) {
 			var message = '.@' + data.user.screen_name + ' さんにより 『' + newname + '』になりました!';
