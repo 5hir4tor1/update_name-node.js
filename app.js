@@ -1,51 +1,47 @@
-var Twit = require('twit')
-var screen_name = '';
-var defaultName = '';
+var twitter = require('twitter');
+var confu = require('confu');
+var screen_name = 'albNo273';
+var defaultName = 'Albireo';
 
-var tw = new Twit({
-	consumer_key: '',
-	consumer_secret : '',
-	access_token : '',
-	access_token_secret : ''
+var conf = confu('.', 'config', 'key.json');
+var client = new twitter({
+	consumer_key: conf.test.cons_key,
+	consumer_secret: conf.test.cons_sec,
+	access_token_key: conf.test.acc_token,
+	access_token_secret: conf.test.acc_token_sec
 });
 
-var stream = tw.stream('user');
 console.log('starting update_name for @' + screen_name);
-stream.on('tweet', function(data) {
-	//XSS対策
-	var text = escape(data.text);
-	var reg = new RegExp("^@" + screen_name + "[ 　](update_.+?)[ 　](.+)");
-	var match = text.match(reg);
-	if(match){
-		var command = match[1];
-		switch(command){
-			//名前変更
-			case 'update_name':
-				//厄介対策　命名から@を削除
-				var newname = match[2].replace(/[@＠]/g, "");
-				newname = newname.slice(0,20);
-				if(newname === 'reset'){
-					newname = defaultName;
-				}
-				var message = '.@' + data.user.screen_name + ' さんにより 『' + newname + '』になりました!';
-				console.log(message)
-				tw.post('account/update_profile', { name: newname	}, function(err, rep) {
-					var message = '.@' + data.user.screen_name + ' さんにより 『' + newname + '』になりました!';
-					tw.post('statuses/update', { status: message, in_reply_to_status_id: data.id_str }, function(err, rep) {
+client.stream('statuses/filter', { track: screen_name }, function (stream) {
+	stream.on('data', function (tweet) {
+		var text = tweet.text;
+		var reg = new RegExp("^@" + screen_name + "[ 　]update_name[ 　](.+)");
+		var res = text.match(reg);
+
+		if (res) {
+			var newname = res[1].replace(/[@＠]/g, "");
+			newname = newname.slice(0, 20);
+			if (newname === 'reset') {
+				newname = defaultName;
+			}
+
+			client.post('account/update_profile', { name: newname }, function (err, rep) {
+				if (!err) {
+					var message = '.@' + tweet.user.screen_name + ' さんにより 『' + newname + '』になりました!';
+					client.post('statuses/update', { status: message, in_reply_to_status_id: tweet.id_str }, function (err, rep) {
+						if (!err)
+							console.log('Tweet succeeded.');
+						else
+							console.log(err);
 					});
-				});
-			break;
-			//？？？な実装
-			case 'update_kanojo':
-				//厄介対策　命名から@を削除
-				var newkanojo = match[2].replace(/[@＠]/g, "");
-				tw.post('account/update_profile', { location: "彼女：" + newkanojo }, function(err, rep) {
-					var message = '@' + data.user.screen_name + ' ' + screen_name + 'の彼女が　' + newkanojo + '　さんになりました!';
-					console.log(message)
-					tw.post('statuses/update', { status: message, in_reply_to_status_id: data.id_str }, function(err, rep) {
-					});
-				});
-			break;
+				} else
+					console.log(err);
+			});
 		}
-	}
+	});
+
+
+	stream.on('error', function (error) {
+		console.log(error);
+	});
 });

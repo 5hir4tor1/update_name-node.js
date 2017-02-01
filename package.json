@@ -1,14 +1,15 @@
 {
   "name": "update_name",
-  "version": "0.0.0",
-  "description": "",
+  "version": "1.0.0",
+  "description": "update_name on node.js",
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Yuki Umeda / albno273",
   "license": "ISC",
   "dependencies": {
-    "twit": "^1.1.18"
+    "confu": "0.0.3",
+    "twitter": "^1.7.0"
   }
 }
